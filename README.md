@@ -51,9 +51,9 @@ Possibly strategies include: dfs, cfg, random, uniform_random, random_input.
 
 Example commands to test the "test/uniform_test.c" program:
 ```
-    cd example
-    ../bin/crownc example.c
-    ../bin/run_crown ./example 10 -dfs
+$ cd example
+$ ../bin/crownc example.c
+$ ../bin/run_crown ./example 10 -dfs
 ```
 This should produce output roughly like:
 
