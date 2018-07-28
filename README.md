@@ -5,7 +5,7 @@
 CROWN is a lightweight easy-to-customize concolic testing tool for real-world C
 programs, which is extended from CREST(https://github.com/jburnim/crest). CROWN
 supports complex C features such as bitwise operators, floating point
-arithmetic, bitfields and so on.
+arithmetic, and so on.
 
 Currently, We have tested CROWN on Ubuntu 14.04 and 16.04 on x86-64. 
 
