@@ -1,0 +1,48 @@
+#!/bin/bash
+
+DIR=`dirname $0`/..
+CILLY=${DIR}/cil/bin/cilly
+SOLVER_DIR=${DIR}
+OPERATION_OPTION=FP
+LIBCROWN=lcrown-fp
+CC=gcc
+
+TARGET=`expr $1 : '\(.*\)\.c'`
+if [ "$2" != "" ]; then
+	if [ "$2" == "help" ] || [ "$2" == "HELP" ]; then
+		echo "Choose one of BV or FP for OPERATION_OPTION"
+		exit 0
+	fi
+	OPERATION_OPTION=$2
+
+	if [ "${OPERATION_OPTION}" == "BV" ]; then
+		LIBCROWN=lcrown-bv
+	elif [ "${OPERATION_OPTION}" == "FP" ]; then
+		LIBCROWN=lcrown-fp
+	else
+		echo "Choose one of BV or FP for OPERATION_OPTION"
+		exit 0
+	fi
+fi
+
+rm -f idcount stmtcount funcount cfg_func_map cfg branches cfg_branches input \
+	   ${TARGET}.gcno ${TARGET}.gcda
+
+
+#written by Hyunwoo Kim (17.07.13)
+# --noPrintLn was removed to print line number of original in .cil.c file.
+# gen_new_cov command uses line number in .cil.c file to express branch information.
+${CILLY} $1 -o ${TARGET} --save-temps --doCrownInstrument \
+    -I${DIR}/include -L${DIR}/lib -L${SOLVER_DIR}/lib -${LIBCROWN} -lstdc++ -g \
+	-lrt #-fsanitize=address #-ltcmalloc_minimal
+# Build another version of target program for test replay.
+# By default, you can measure the branch coverage of target program with gcov.
+# libcrown-replay : The library for target program with symbolic setting,
+#                   whose source code is not cil-instrumented
+# TODO: Implement replay for initial inputs
+#${CC} -o ${TARGET}_replay ${@} -I${DIR}/include -L${DIR}/lib -lcrown-replay \
+#				--coverage
+
+echo "Complied with ${OPERATION_OPTION} option"
+
+${DIR}/bin/process_cfg
