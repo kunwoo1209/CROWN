@@ -37,7 +37,7 @@ $ cd ..
 
 To use CROWN on a C program, use functions SYM_int, SYM_char,
 etc., declared in "crown.h", to generate symbolic inputs for your
-program. For example, see the program in example/
+program. For example, see the example program example/example.c
 
 For simple, single-file programs, you can use the build script
 "bin/crownc" to instrument and compile your test program.
@@ -45,8 +45,9 @@ For simple, single-file programs, you can use the build script
 ### Run CROWN 
 
 CROWN is run on an instrumented program as:
-    bin/run_crest PROGRAM NUM_ITERATIONS -STRATEGY
-
+```
+$ bin/run_crown PROGRAM NUM_ITERATIONS -STRATEGY
+```
 Possibly strategies include: dfs, cfg, random, uniform_random, random_input.
 
 Example commands to test the "test/uniform_test.c" program:
