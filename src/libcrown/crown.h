@@ -1,4 +1,4 @@
-/* Copyright (c) 2008, Jacob Burnim (jburnim@cs.berkeley.edu)
+/* Copyright (c) 2015-2018, Software Testing & Verification Group
  *
  * This file is part of CROWN, which is distributed under the revised
  * BSD license.  A copy of this license can be found in the file LICENSE.
@@ -9,8 +9,8 @@
  * for details.
  */
 
-#ifndef LIBCREST_CREST_H__
-#define LIBCREST_CREST_H__
+#ifndef LIBCROWN_CROWN_H__
+#define LIBCROWN_CROWN_H__
 
 //#include <stdlib.h>
 

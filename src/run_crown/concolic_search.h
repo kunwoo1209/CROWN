@@ -99,14 +99,19 @@ class BoundedDepthFirstSearch : public Search {
 public:
 	explicit BoundedDepthFirstSearch(const string& program,
 			int max_iterations,
-			int max_depth);
+			int max_depth,
+			bool reverse);
 	virtual ~BoundedDepthFirstSearch();
 
 	virtual void Run();
 
 private:
 	int max_depth_;
+	bool reverse_;
+	//reverse set to 1 for reverse DFS
+	//reverse set to 0 for DFS
 
+	void reverse_DFS(size_t pos, int depth, SymbolicExecution& prev_ex);
 	void DFS(size_t pos, int depth, SymbolicExecution& prev_ex);
 };
 

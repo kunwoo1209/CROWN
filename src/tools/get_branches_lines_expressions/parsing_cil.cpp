@@ -98,6 +98,7 @@ using namespace std;
 
 ParentMap *g_parentmap;
 bool g_flag, first_visit_func;
+bool hasBody = false;
 
 //fout_1 indicates funtions_in_file.
 ofstream fout_1("functions_in_file", ios::app);
@@ -290,6 +291,7 @@ public:
       /* __globinit_... function is not added into functions_in_file
          since it is inserted function by cilly. */
       if(f->getNameInfo().getAsString().find("__globinit_") == string::npos) {
+        hasBody = true;
         if(!first_visit_func)
           fout_1<<endl;
         first_visit_func = false;
@@ -337,33 +339,25 @@ int main(int argc, char *argv[])
   // CompilerInstance will hold the instance of the Clang compiler for us,
   // managing the various objects needed to run the compiler.
   CompilerInstance TheCompInst;
-  
-  // Diagnostics manage problems and issues in compile 
-  TheCompInst.createDiagnostics(NULL, false);
+  TheCompInst.createDiagnostics();
 
-  // Set target platform options 
+  LangOptions &lo = TheCompInst.getLangOpts();
+  lo.CPlusPlus = 1;
+
   // Initialize target info with the default triple for our platform.
-  TargetOptions *TO = new TargetOptions();
+  auto TO = std::make_shared<TargetOptions>();
   TO->Triple = llvm::sys::getDefaultTargetTriple();
-  TargetInfo *TI = TargetInfo::CreateTargetInfo( \
-      TheCompInst.getDiagnostics(), TO);
+  TargetInfo *TI =
+      TargetInfo::CreateTargetInfo(TheCompInst.getDiagnostics(), TO);
   TheCompInst.setTarget(TI);
 
-  // FileManager supports for file system lookup, file system caching,
-  // and directory search management.
   TheCompInst.createFileManager();
   FileManager &FileMgr = TheCompInst.getFileManager();
-  
-  // SourceManager handles loading and caching of source files into memory.
   TheCompInst.createSourceManager(FileMgr);
   SourceManager &SourceMgr = TheCompInst.getSourceManager();
-  
-  // Prreprocessor runs within a single source file
-  TheCompInst.createPreprocessor();
-  
-  // ASTContext holds long-lived AST nodes (such as types and decls) .
+  TheCompInst.createPreprocessor(TU_Module);
   TheCompInst.createASTContext();
-
+#if 0
   // Enable HeaderSearch option
   llvm::IntrusiveRefCntPtr<clang::HeaderSearchOptions> \
       hso( new HeaderSearchOptions());
@@ -401,7 +395,7 @@ int main(int argc, char *argv[])
          TheCompInst.getPreprocessorOpts(),
          *hso,
          TheCompInst.getFrontendOpts());
-
+#endif
 
   // A Rewriter helps us manage the code rewriting task.
   Rewriter TheRewriter;
@@ -409,8 +403,8 @@ int main(int argc, char *argv[])
 
   // Set the main file handled by the source manager to the input file.
   const FileEntry *FileIn = FileMgr.getFile(argv[1]);
-  SourceMgr.createMainFileID(FileIn);
-  
+  SourceMgr.setMainFileID(SourceMgr.createFileID(
+              FileIn, SourceLocation(), SrcMgr::C_User));
   // Inform Diagnostics that processing of a source file is beginning. 
   TheCompInst.getDiagnosticClient().BeginSourceFile( \
       TheCompInst.getLangOpts(),&TheCompInst.getPreprocessor());
@@ -421,6 +415,9 @@ int main(int argc, char *argv[])
   // Parse the file to AST, registering our consumer as the AST consumer.
   ParseAST(TheCompInst.getPreprocessor(), &TheConsumer, \
       TheCompInst.getASTContext());
+  if (hasBody){
+      fout_1 << endl;
+  }
   fout_1.close();
   fout_2.close();
 

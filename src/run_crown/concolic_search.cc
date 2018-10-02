@@ -26,6 +26,7 @@
 
 #include "run_crown/z3_solver.h"
 #include "run_crown/concolic_search.h"
+#include "base/basic_types.h"
 #include "base/basic_functions.h"
 #include "run_crown/unary_expression.h"
 //#include "run_crown/symbolic_expression_factory.h"
@@ -45,12 +46,13 @@ size_t crown::Z3Solver::no_reduction_unsat_count = 0;
 unsigned long long crown::Z3Solver::no_reduction_sat_formula_length = 0;
 unsigned long long crown::Z3Solver::no_reduction_unsat_formula_length = 0;
 
-/* TCdir (defined in src/run_crown.cc) is a relative directory path 
+/* TCdir (defined in crown-fp/src/run_crown.cc) is a relative directory path 
  * to save generated test cases files * (i.e. input.1, input.2, ...)
  * TCdir is empty if -TCDIR commandline option is not used.
  * 2017.07.07 Hyunwoo Kim 
  */
 extern string TCdir;
+extern int flag_init_TC;
 
 namespace crown {
 
@@ -85,15 +87,7 @@ Search::Search(const string& program, int max_iterations)
 		branch_count_.reserve(100000);
 		branch_count_.push_back(0);
 
-        char *infodir = getenv("INFODIR");
-        char filename[BUFSIZ] = "branches";
-        if (infodir != NULL){
-            string infodirstr(infodir);
-            infodirstr += "/branches";
-            strncpy(filename, infodirstr.c_str(), BUFSIZ);
-        }
-        ifstream in(filename);
-
+		ifstream in("branches");
 		assert(in);
 		function_id_t fid;
 		int numBranches;
@@ -277,7 +271,10 @@ void Search::LaunchProgram(const vector<Value_t>& inputs) {
 	const vector<unsigned char>& l = tmpl;
 	const vector<unsigned char>& i = tmpi;
 
-	WriteInputToFileOrDie("input", inputs, h, l,i);
+	if(flag_init_TC == 1)
+		flag_init_TC = 0;
+	else
+		WriteInputToFileOrDie("input", inputs, h, l,i);
 	// The current directory must have "input" file
 	system(program_.c_str()); 
 }
@@ -627,8 +624,8 @@ bool Search::CheckPrediction(const SymbolicExecution& old_ex,
 ////////////////////////////////////////////////////////////////////////
 
 BoundedDepthFirstSearch::BoundedDepthFirstSearch
-	(const string& program, int max_iterations, int max_depth)
-	: Search(program, max_iterations), max_depth_(max_depth) { }
+	(const string& program, int max_iterations, int max_depth, bool reverse)
+	: Search(program, max_iterations), max_depth_(max_depth), reverse_(reverse) { }
 
 BoundedDepthFirstSearch::~BoundedDepthFirstSearch() { }
 
@@ -638,9 +635,53 @@ void BoundedDepthFirstSearch::Run() {
 	RunProgram(vector<Value_t>(), &ex);
 	UpdateCoverage(ex);
 
-	DFS(0, max_depth_, ex);
+	if(reverse_ == true)
+		reverse_DFS(0, max_depth_, ex);
+	else
+		DFS(0,max_depth_,ex);
 	// DFS(0, ex);
 
+}
+
+void BoundedDepthFirstSearch::reverse_DFS(size_t pos, int depth, SymbolicExecution& prev_ex) {
+	SymbolicExecution cur_ex;
+	vector<Value_t> input;
+
+	const SymbolicPath& path = prev_ex.path();
+
+	for (size_t i = pos; (i < path.constraints().size()) && (depth > 0); i++) {
+		// Solve constraints[0..i].
+		if (!SolveAtBranch(prev_ex, i, &input)) {
+			Z3Solver::no_reduction_unsat_formula_length += (i+1);
+			Z3Solver::no_reduction_unsat_count++;
+
+			continue;
+		}
+		Z3Solver::no_reduction_sat_formula_length += (i+1);
+		Z3Solver::no_reduction_sat_count++;
+	
+		SymbolicExecution* ex = new SymbolicExecution();	
+		cur_ex = *ex;
+		assert(cur_ex.object_tracker()->snapshotManager().size()==0);
+
+		// Run on those constraints.
+		cur_ex = SymbolicExecution();
+		RunProgram(input, &cur_ex);
+		UpdateCoverage(cur_ex);
+
+
+		// Check for prediction failure.
+		size_t branch_idx = path.constraints_idx()[i];
+		if (!CheckPrediction(prev_ex, cur_ex, branch_idx)) {
+			fprintf(stderr, "Prediction failed!\n");
+			continue;
+		}
+
+		// We successfully solved the branch, recurse.
+		depth--;
+
+		reverse_DFS(i+1, depth, cur_ex);
+	}
 }
 
 
@@ -650,8 +691,7 @@ void BoundedDepthFirstSearch::DFS(size_t pos, int depth, SymbolicExecution& prev
 
 	const SymbolicPath& path = prev_ex.path();
 
-	//for (size_t i = pos; (i < path.constraints().size()) && (depth > 0); i++) {
-    for (int i = path.constraints().size() - 1; (i >= (int)pos && depth > 0);  i--){
+	for (size_t i = path.constraints().size()-1; i < path.constraints().size() && i>=pos && (depth > 0); i--) {
 		// Solve constraints[0..i].
 		if (!SolveAtBranch(prev_ex, i, &input)) {
 			Z3Solver::no_reduction_unsat_formula_length += (i+1);

@@ -1506,7 +1506,7 @@ let feature : featureDescr =
            * and by explicitly adding edges for calls to functions
            * defined in this file. *)
           handleCallEdgesAndWriteCfg f ;
-(*    (let bitfieldVisitor = new crownbitfieldInstrumentVisitor f in
+    (*(let bitfieldVisitor = new crownbitfieldInstrumentVisitor f in
              visitCilFileSameGlobals (bitfieldVisitor :> cilVisitor) f) ; *)
   
           (* Finally instrument the program. *)

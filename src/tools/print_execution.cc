@@ -15,6 +15,7 @@
 #include <vector>
 #include <map>
 #include <sstream>
+#include <stack>
 #include "run_crown/symbolic_execution.h"
 
 using namespace crown;
@@ -70,29 +71,6 @@ int main(void) {
      * output of print_execution was refined.
      */
 
-	// Print input.
-	cout << "\nSymbolic variables & input values" << endl;
-	for (size_t i = 0; i < ex.inputs().size(); i++) {
-		if(ex.vars().at(i) == types::FLOAT || ex.vars().at(i) == types::DOUBLE){
-			cout << "("<<ex.var_names()[i]<<" = "<<ex.inputs()[i].floating << ") FP\t[ Line: " << ex.locations()[i].lineno<<", File: " << ex.locations()[i].fname << " ]\n";
-		}else{
-			cout << "("<<ex.var_names()[i]<<" = "<<ex.inputs()[i].integral << ")\t[ Line: " << ex.locations()[i].lineno<<", File: " << ex.locations()[i].fname << " ]\n";
-		}
-	}
-	cout << endl;
-
-	cout << "Symbolic path for the input" <<endl;
-	{ // Print the constraints.
-        
-		string tmp;
-		for (size_t i = 0; i < ex.path().constraints().size(); i++) {
-			tmp.clear();
-			ex.path().constraints()[i]->AppendToString(&tmp);
-			cout << tmp << "\t[ Line: " << ex.path().locations()[i].lineno<<", File: " << ex.path().locations()[i].fname<< " ]" << endl;
-		}
-		cout << endl;
-	}
-
     /*
      * comments written by Hyunwoo Kim (17.07.26)
      * This part parses line number per bid from bid-lnum-exp
@@ -101,8 +79,10 @@ int main(void) {
      */
     vector<string> list_cil_files;
     string res_cmd;
+	stack<string> stk_func;
     map<int, int> bid_line_map;
     map<int, string> bid_filename_map;
+    map<int, string> bid_funcname_map;
     
     res_cmd = exec_cmd("ls *.cil.c");
     split_string(res_cmd, '\n', list_cil_files);
@@ -140,21 +120,78 @@ int main(void) {
                 fin_fif>>bid;
                 fin_fif.get();
 
-                bid_filename_map[bid]=filename.substr(0,filename.length()-4);
+                bid_filename_map[bid]=filename.substr(0,filename.length()-8);
+				bid_funcname_map[bid]=funcname;
             }
         }
         fin_fif.close();
     }
     exec_cmd("rm -rf bid-lnum-exp functions_in_file");
 
+
+	// Print input.
+	cout << "\nSymbolic variables & input values" << endl;
+	for (size_t i = 0; i < ex.inputs().size(); i++) {
+		if(ex.vars().at(i) == types::FLOAT || ex.vars().at(i) == types::DOUBLE){
+			cout << "("<<ex.var_names()[i]<<" = "<<ex.inputs()[i].floating << ") FP\t[ Line: " << ex.locations()[i].lineno<<", File: " << ex.locations()[i].fname << " ]\n";
+		}else{
+			cout << "("<<ex.var_names()[i]<<" = ";
+
+			switch(ex.vars().at(i)){
+				case types::CHAR:
+					cout  << +(char)(ex.inputs()[i].integral);
+					break;
+				case types::SHORT:
+					cout  << (short)(ex.inputs()[i].integral);
+					break;
+				case types::INT:
+					cout  << (int)(ex.inputs()[i].integral);
+					break;
+				case types::LONG:
+					cout  << (long)(ex.inputs()[i].integral);
+					break;
+				default:
+					cout << ex.inputs()[i].integral;
+			}
+			ex.inputs()[i].integral;
+
+			cout << ")\t[ Line: " << ex.locations()[i].lineno<<", File: " << ex.locations()[i].fname << " ]\n";
+		}
+	}
+	cout << endl;
+
+	cout << "Symbolic path formula" <<endl;
+	{ // Print the constraints.
+        
+		string tmp;
+		for (size_t i = 0; i < ex.path().constraints().size(); i++) {
+			tmp.clear();
+			ex.path().constraints()[i]->AppendToString(&tmp);
+			cout << tmp << "\t[ Line: " << ex.path().locations()[i].lineno<<", File: " << ex.path().locations()[i].fname<< " ]" << endl;
+		}
+		cout << endl;
+	}
 	// Print the branches.
 	cout << "Sequence of reached branch ids" << endl;
 	for (size_t i = 0; i < ex.path().branches().size(); i++) {
 		cout << ex.path().branches()[i] << "\t";
-        if(ex.path().branches()[i] == -1)
-            cout << "[Function enters]" << endl;
-        else if(ex.path().branches()[i] == -2)
-            cout << "[Function exits]" << endl;
+        if(ex.path().branches()[i] == -1) {
+			if(i+1 < ex.path().branches().size() && ex.path().branches()[i+1] >=0 ) {
+				stk_func.push(bid_funcname_map[ex.path().branches()[i+1]]);
+	            cout << "[" << bid_funcname_map[ex.path().branches()[i+1]] <<" enters]" << endl;
+			}
+			else{
+				stk_func.push("");
+				cout << "[Function enters]" << endl;
+			}
+		}
+        else if(ex.path().branches()[i] == -2) {
+			if(stk_func.top() != "")
+				cout << "[" << stk_func.top() <<" exits]" << endl;
+			else
+	            cout << "[Function exits]" << endl;
+			stk_func.pop();
+		}
         else {
             cout << "[ Line: " << bid_line_map[ex.path().branches()[i]] \
                 << ", File: " << bid_filename_map[ex.path().branches()[i]] \

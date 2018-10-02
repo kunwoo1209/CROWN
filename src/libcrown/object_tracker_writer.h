@@ -1,5 +1,5 @@
 //
-// This file is part of CREST, which is distributed under the revised
+// This file is part of CROWN, which is distributed under the revised
 // BSD license.  A copy of this license can be found in the file LICENSE.
 //
 // This program is distributed in the hope that it will be useful, but

@@ -12,6 +12,8 @@
 #include <time.h>
 #include <cstdio>
 #include <iostream>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "run_crown/concolic_search.h"
 
 
@@ -20,7 +22,7 @@
  * 2017.07.07 Hyunwoo Kim 
  */
 string TCdir;
-
+int flag_init_TC;
 /* print_command_usage now shows -TCDIR option and more description about
  * search strategies 
  * 2017.07.07 Hyunwoo Kim 
@@ -28,9 +30,9 @@ string TCdir;
 
 void print_command_usage() {
     std::cerr<<"Usage:"
-<<"\nrun_crown 'target args' <num-iter> -<Strategy> [-TCDIR <path>]"
+<<"\nrun_crown 'target args' <num-iter> -<Strategy> [-TCDIR <path>] [-INIT_TC]"
 <<"\n-Note that <Strategy> can be one of {random, random_input, cfg, " 
-<<"\n cfg_baseline, hybrid, dfs [<max-depth>], uniform_random [<max-depth>]}."
+<<"\n cfg_baseline, hybrid, dfs, rev-dfs [<max-depth>], uniform_random [<max-depth>]}."
 <<std::endl;
 }
 
@@ -63,6 +65,19 @@ int main(int argc, char* argv[]) {
     string prog = argv[1];
     int num_iters = atoi(argv[2]);
     string search_type = argv[3];
+	string last_param = argv[argc-1];
+
+	if(last_param == "-INIT_TC"){
+		struct stat buffer;
+		if(stat("input", &buffer) != 0){
+			std::cerr<<"Error: No initial test case given"<<std::endl;
+			exit(1);
+		}
+		flag_init_TC = 1;
+		argc--;
+	}
+	else
+		flag_init_TC = 0;
 
     /* Updated to handle -TCDIR 
      * 2017.07.07 Hyunwoo Kim 
@@ -74,18 +89,18 @@ int main(int argc, char* argv[]) {
         exit(1);
     }      
 
-    if(search_type == "-dfs" || search_type == "-uniform_random"){
+    if(search_type == "-dfs" || search_type == "-rev-dfs" || search_type == "-uniform_random"){
         switch(argc){
 
-	    // ex> run_crown main 100 -dfs
-	    // i.e., no <max-depth> given to -dfs or -uniform_random and 
+	    // ex> run_crown main 100 -rev-dfs
+	    // i.e., no <max-depth> given to -rev-dfs or -uniform_random and 
 	    // no -TCDIR option given
 	    case 4: 
 		break;
 
-            // -dfs <max-depth>  or
-	    // -dfs -TCDIR w/o <path> (i.e. error) or
-            // -dfs 3.14 (i.e. error) 
+            // -rev-dfs <max-depth>  or
+	    // -rev-dfs -TCDIR w/o <path> (i.e. error) or
+            // -rev-dfs 3.14 (i.e. error) 
             case 5:
                 if(string(argv[4])=="-TCDIR"){
                     print_command_usage();
@@ -101,7 +116,7 @@ int main(int argc, char* argv[]) {
 		max_depth = atoi(argv[4]); 
                 break;
 		
-	    // ex> run_crown main 100 -dfs -TCDIR test 
+	    // ex> run_crown main 100 -rev-dfs -TCDIR test 
 	    // all other cases are errors
             case 6:
                 if(string(argv[4])!="-TCDIR"){
@@ -114,7 +129,7 @@ int main(int argc, char* argv[]) {
 		}
                 break;
 
-            // ex> run_crown 'target args' 100 -dfs 10000  -TCDIR test 
+            // ex> run_crown 'target args' 100 -rev-dfs 10000  -TCDIR test 
             case 7:
                 if(string(argv[4])=="-TCDIR"){
                     print_command_usage();
@@ -188,13 +203,16 @@ int main(int argc, char* argv[]) {
 		strategy = new crown::RandomSearch(prog, num_iters);
 	} else if (search_type == "-random_input") {
 		strategy = new crown::RandomInputSearch(prog, num_iters);
-	} else if (search_type == "-dfs") {
+	} else if (search_type == "-rev-dfs") {
 
        	    /* if <max-depth> is omitted, 1,000,000 is set as default.
              * 2017.07.07 Hyunwoo Kim 
              */
 	    strategy = new crown::BoundedDepthFirstSearch(prog, num_iters, 
-			    max_depth>0 ? max_depth: 1000000);
+			    max_depth>0 ? max_depth: 1000000, true);
+	} else if (search_type == "-dfs") {
+	    strategy = new crown::BoundedDepthFirstSearch(prog, num_iters, 
+			    max_depth>0 ? max_depth: 1000000, false);
 	} else if (search_type == "-cfg") {
 		strategy = new crown::CfgHeuristicSearch(prog, num_iters);
 	} else if (search_type == "-cfg_baseline") {
@@ -216,6 +234,9 @@ int main(int argc, char* argv[]) {
 	strategy->Run();
 
 	delete strategy;
-	//if(remove("input")) perror("Error:");
+	/*
+	if(remove("input")) perror("Error:");
+	*/
+
 	return 0;
 }

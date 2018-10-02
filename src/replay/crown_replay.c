@@ -515,6 +515,59 @@ void __CrownDouble(double *x, int cnt_sym_var, int ln, char* fname, ...)
         // Symbolic value for double is a binary string format.
         *x = binStringToDouble(buf);
 }
+
+void __CrownUChar2(unsigned char* x, unsigned char val, int cnt_sym_var, int ln, char* fname, ...){
+    __CrownUChar(x, cnt_sym_var, ln, fname);
+}
+
+void __CrownUShort2(unsigned short* x, unsigned short val, int cnt_sym_var, int ln, char* fname, ...){
+    __CrownUShort(x, cnt_sym_var, ln, fname);
+}
+
+void __CrownUInt2(unsigned int* x, unsigned int val, int cnt_sym_var, int ln, char* fname, ...){
+    __CrownUInt(x, cnt_sym_var, ln, fname);
+}
+
+void __CrownULong2(unsigned long* x, unsigned long val, int cnt_sym_var, int ln, char* fname, ...){
+    __CrownULong(x, cnt_sym_var, ln, fname);
+}
+
+void __CrownULongLong2(unsigned long long* x, unsigned long long val, int cnt_sym_var, int ln, char* fname, ...){
+    __CrownULongLong(x, cnt_sym_var, ln, fname);
+}
+
+void __CrownChar2(char* x, char val, int cnt_sym_var, int ln, char* fname, ...){
+    __CrownChar(x, cnt_sym_var, ln, fname);
+}
+
+void __CrownShort2(short* x, short val, int cnt_sym_var, int ln, char* fname, ...){
+    __CrownShort(x, cnt_sym_var, ln, fname);
+}
+
+void __CrownInt2(int* x, int val, int cnt_sym_var, int ln, char* fname, ...){
+    __CrownInt(x, cnt_sym_var, ln, fname);
+}
+
+void __CrownLong2(long * x, long val, int cnt_sym_var, int ln, char* fname, ...){
+    __CrownLong(x, cnt_sym_var, ln, fname);
+}
+
+void __CrownLongLong2(long long * x, long long val, int cnt_sym_var, int ln, char* fname, ...){
+    __CrownLongLong(x, cnt_sym_var, ln, fname);
+}
+
+void __CrownFloat2(float * x, float val, int cnt_sym_var, int ln, char* fname, ...){
+    __CrownFloat(x, cnt_sym_var, ln, fname);
+}
+
+void __CrownDouble2(double * x, double val, int cnt_sym_var, int ln, char* fname, ...){
+    __CrownDouble(x, cnt_sym_var, ln, fname);
+}
+
+void __CrownLongDouble2(long double * x, long double val, int cnt_sym_var, int ln, char* fname, ...){
+    __CrownLongDouble(x, cnt_sym_var, ln, fname);
+}
+
 void __CrownLongDouble(long double *x, int cnt_sym_var, int ln, char* fname, ...)
 {
     puts("crown_replay: CROWN_longdouble() is not supported yet ");
