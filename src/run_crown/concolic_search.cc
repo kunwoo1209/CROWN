@@ -260,7 +260,8 @@ void Search::WriteCoverageToFileOrDie(const string& file) {
 }
 
 
-void Search::LaunchProgram(const vector<Value_t>& inputs) {
+int Search::LaunchProgram(const vector<Value_t>& inputs) {
+    int ret;
 	vector<unsigned char> tmph = vector<unsigned char>();
 	vector<unsigned char> tmpl = vector<unsigned char>();
 	vector<unsigned char> tmpi = vector<unsigned char>();
@@ -276,12 +277,14 @@ void Search::LaunchProgram(const vector<Value_t>& inputs) {
 	else
 		WriteInputToFileOrDie("input", inputs, h, l,i);
 	// The current directory must have "input" file
-	system(program_.c_str()); 
+	ret = system(program_.c_str()); 
+    return ret;
 }
 
 
 
 void Search::RunProgram(const vector<Value_t>& inputs, SymbolicExecution* ex) {
+    int exitcode;
 	fprintf(stderr, "-------------------------\n");
 	if (++num_iters_ > max_iters_) {
 #if 0
@@ -317,7 +320,7 @@ void Search::RunProgram(const vector<Value_t>& inputs, SymbolicExecution* ex) {
 	}
 
 	// Run the program.
-	LaunchProgram(inputs);
+	exitcode = LaunchProgram(inputs);
 
 	// Read the execution from the program.
 	// Want to do this with sockets.  (Currently doing it with files.)
@@ -367,7 +370,11 @@ void Search::RunProgram(const vector<Value_t>& inputs, SymbolicExecution* ex) {
 			char fname[BUFSIZ] = {0,};
 			snprintf(fname, BUFSIZ, "%s/input.%d",
 					TCdir.c_str(), num_iters_);
-			WriteInputToFileOrDie(fname, ex->inputs(), ex->h(), ex->l(), ex->indexSize());
+            if (WIFEXITED(exitcode) != 0){
+    			WriteInputToFileOrDie(fname, ex->inputs(), ex->h(), ex->l(), ex->indexSize());
+            }else{
+                WriteInputToFileOrDie(fname, inputs, ex->h(), ex->l(), ex->indexSize());
+            }
 		}
 	}
 }

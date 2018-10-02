@@ -90,8 +90,8 @@ class Search {
 	 void WriteInputToFileOrDie(const string& file, const vector<Value_t>& input, const vector<unsigned char> & h, const vector<unsigned char> & l,
 					 												const vector<unsigned char> & idx);
 	 void WriteCoverageToFileOrDie(const string& file);
-	 void LaunchProgram(const vector<Value_t>& inputs);
-	 void LaunchProgram();
+	 int LaunchProgram(const vector<Value_t>& inputs);
+	 int LaunchProgram();
 };
 
 
