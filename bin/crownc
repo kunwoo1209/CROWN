@@ -40,8 +40,9 @@ ${CILLY} $1 -o ${TARGET} --save-temps --doCrownInstrument \
 # libcrown-replay : The library for target program with symbolic setting,
 #                   whose source code is not cil-instrumented
 # TODO: Implement replay for initial inputs
-#${CC} -o ${TARGET}_replay ${@} -I${DIR}/include -L${DIR}/lib -lcrown-replay \
-#				--coverage
+# Kunwoo Park (2018-11-09) : The following line is uncommented to generate replay file when executing "crownc"
+${CC} -o ${TARGET}_replay ${@} -I${DIR}/include -L${DIR}/lib -lcrown-replay \
+				--coverage
 
 echo "Complied with ${OPERATION_OPTION} option"
 
