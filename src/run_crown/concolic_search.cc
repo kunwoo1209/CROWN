@@ -396,6 +396,7 @@ void Search::RunProgram(const vector<Value_t>& inputs, SymbolicExecution* ex) {
 		num_iters_ -= 1;
 	    }
 		}
+	    system("rm unsatisfy &> /dev/null");
 	}
 }
 
