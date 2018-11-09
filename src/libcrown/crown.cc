@@ -1236,18 +1236,3 @@ void __CrownCheckSymbolic (__CROWN_ID id, char *callee_){
         enable_symbolic = 0;
     }
 }   
-
-/* Kunwoo Park (2018-11-09) : Define SYM_assume()            *
- * Input: Boolean Expression (not a string)                  *
- * If input expression is not satisfied,                     * 
- * 1. Prints an error message                                *
- * 2. Generates a file to communicate with run_crown process *
- * 3. Exit the current process                               */
-void SYM_assume (__CROWN_BOOL e) {
-    if (!e) {
-        printf("Unsatisfy the assumption!\n");
-	FILE * communicate = fopen("unsatisfy", "w");
-	fclose(communicate);
-	exit(1);	
-    }
-}

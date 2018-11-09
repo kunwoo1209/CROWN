@@ -12,7 +12,7 @@
 #ifndef LIBCROWN_CROWN_H__
 #define LIBCROWN_CROWN_H__
 
-//#include <stdlib.h>
+#include <stdlib.h>
 
 /*
  * During instrumentation, the folowing function calls are inserted in the
@@ -230,7 +230,6 @@ EXTERN void __CrownHandleReturn(__CROWN_ID,  __CROWN_TYPE, __CROWN_VALUE, __CROW
 EXTERN void __CrownSetCallerCalleeName(__CROWN_ID, char *caller, char *callee) __SKIP;
 EXTERN void __CrownEnableSymbolic(__CROWN_ID, char *caller) __SKIP;
 EXTERN void __CrownCheckSymbolic(__CROWN_ID, char *callee) __SKIP;
-EXTERN void SYM_assume(__CROWN_BOOL) __SKIP; // Kunwoo Park (2018-11-09) : Declare SYM_assume
 
 /*
  * Functions (macros) for obtaining symbolic inputs.
@@ -347,7 +346,19 @@ EXTERN void SYM_assume(__CROWN_BOOL) __SKIP; // Kunwoo Park (2018-11-09) : Decla
 #define SYM_long_double_init(x, val, ...) { static int cnt_symbolic_var = 1; \
             (VA_NUM_ARGS_IMPL(0,## __VA_ARGS__, 1, 0)) ? __CrownLongDoubleInit(&x, val, cnt_symbolic_var, __LINE__, __FILE__,## __VA_ARGS__)  : __CrownLongDoubleInit(&x, val, cnt_symbolic_var, __LINE__, __FILE__, #x); \
                 cnt_symbolic_var++; }
-
+/* Kunwoo Park (2018-11-09) : Define SYM_assume()            *
+ * Input: Boolean Expression                                 *
+ * If input expression is not satisfied,                     *
+ * 1. Prints an error message                                *
+ * 2. Generates a file to communicate with run_crown process *
+ * 3. Exit the current process                               */
+#define SYM_assume(e) do { \
+  if (!(e)) { \
+    printf("Unsatisfy the assumption!\n"); \
+    FILE * communicate = fopen("unsatisfy", "w"); \
+    fclose(communicate); \
+    exit(1); \
+  } } while (0) \
 
 EXTERN void __CrownUChar(unsigned char* x, int cnt_sym_var, int ln, char* fname, ...) __SKIP;
 EXTERN void __CrownUShort(unsigned short* x, int cnt_sym_var, int ln, char* fname, ...) __SKIP;

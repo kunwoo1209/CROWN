@@ -686,11 +686,3 @@ unsigned long long __CrownBitField(unsigned char * x, char unionSize, int lowest
 		return 0; //should not be reached.
 
 }
-
-// Kunwoo Park (2018-11-09) : Required to generate replay file (The body is not important)
-void SYM_assume (unsigned char e) {
-  if (!e) {
-    printf("Unsatisfy the assumption!\n");
-    exit(1);
-  }
-}
